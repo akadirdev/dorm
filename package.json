@@ -11,6 +11,7 @@
     "prestart": "npm run build",
     "start": "node ./dist/index.js"
   },
+  "type": "commonjs",
   "keywords": [
     "orm",
     "potgresql",
@@ -19,8 +20,12 @@
   ],
   "author": "alpha",
   "license": "ISC",
+  "dependencies": {
+    "pg": "^8.7.3"
+  },
   "devDependencies": {
     "@types/node": "^17.0.23",
+    "@types/pg": "^8.6.5",
     "@typescript-eslint/eslint-plugin": "^5.18.0",
     "@typescript-eslint/parser": "^5.18.0",
     "eslint": "^7.32.0",

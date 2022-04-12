@@ -1,5 +1,6 @@
 import { DataSource } from './core/datasource';
 import { DefaultRepository } from './core/default.repository';
+import { client } from './datasource/connector';
 import { column } from './decorators/column.decorator';
 import { entity } from './decorators/entity.decorator';
 
@@ -37,6 +38,11 @@ async function main() {
   const commodityRepository = new CommodityRepository(new DataSource());
   const commodities = await commodityRepository.findAll();
   console.log(commodities);
+
+  await client.connect();
+  const res = await client.query('SELECT * from dorm_test');
+  await client.end();
+  console.log(res.rows);
 }
 
 main();
