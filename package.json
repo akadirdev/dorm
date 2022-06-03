@@ -1,5 +1,5 @@
 {
-  "name": "storm",
+  "name": "dorm",
   "version": "0.0.1",
   "description": "Fast, extandable, powerfull ORM tool",
   "main": "index.js",
@@ -11,28 +11,21 @@
     "prestart": "npm run build",
     "start": "node ./dist/index.js"
   },
-  "type": "commonjs",
   "keywords": [
     "orm",
-    "potgresql",
-    "relational",
-    "nodejs"
+    "postgresql",
+    "rdbms",
+    "nodejs",
+    "typescript"
   ],
-  "author": "alpha",
+  "author": "akadirdev",
   "license": "ISC",
   "dependencies": {
     "pg": "^8.7.3"
   },
   "devDependencies": {
-    "@types/node": "^17.0.23",
+    "@types/node": "^17.0.25",
     "@types/pg": "^8.6.5",
-    "@typescript-eslint/eslint-plugin": "^5.18.0",
-    "@typescript-eslint/parser": "^5.18.0",
-    "eslint": "^7.32.0",
-    "eslint-config-standard": "^16.0.3",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.2.0",
     "typescript": "^4.6.3"
   }
 }
