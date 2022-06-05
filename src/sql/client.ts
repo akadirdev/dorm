@@ -1,4 +1,5 @@
 import { Client, Pool } from "pg";
+import { WhereFilter } from "../filters/where.filter";
 
 export namespace Dormi {
   export const CONNECTORS = {
@@ -66,11 +67,17 @@ export namespace Dormi {
     }
   }
 
-  export class Repository {
+  class Repository {
     async create<T>(data: T, option?: any): Promise<T> {
       return data;
     }
+
+    async find<T>(where: WhereFilter<T>, option?: any): Promise<T[]> {
+      return;
+    }
   }
+
+  export type Class<T> = new (...args: any[]) => T;
 
   export class Dorm<T extends Dormi.BaseDriver> {
     private readonly driver: T;
