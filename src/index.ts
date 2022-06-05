@@ -1,14 +1,40 @@
-import { Dormi } from "./sql/client";
+import { PgConnector } from "./connectors";
+import { model, property } from "./decorators";
+import { Dorm } from "./dorm";
 
-class Person {
-  id: number;
+@model("personel")
+export class Person {
+  @property({
+    id: true,
+  })
+  id?: number;
+
+  @property({
+    type: "string",
+    required: true,
+  })
   name: string;
-  surname: string;
+
+  @property({
+    type: "string",
+    required: true,
+  })
+  email: string;
+
+  @property({
+    name: "p_age",
+    type: "number",
+    nullable: true,
+  })
   age: number;
+
+  constructor(data?: Partial<Person>) {
+    Object.assign(this, data ?? {});
+  }
 }
 
 const main = async (): Promise<void> => {
-  const ds = new Dormi.Dorm<Dormi.PgDriver>({
+  const ds = new Dorm<PgConnector>({
     user: "postgres",
     host: "localhost",
     database: "speedy",
@@ -28,7 +54,7 @@ const main = async (): Promise<void> => {
     name: {
       inq: ["june", "july"],
     },
-    surname: {
+    email: {
       inq: ["saturday"],
     },
   });

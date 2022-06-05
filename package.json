@@ -21,7 +21,8 @@
   "author": "akadirdev",
   "license": "ISC",
   "dependencies": {
-    "pg": "^8.7.3"
+    "pg": "^8.7.3",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@types/node": "^17.0.25",
