@@ -33,33 +33,37 @@ export class Person {
   }
 }
 
-const main = async (): Promise<void> => {
-  const ds = new Dorm<PgConnector>({
-    user: "postgres",
-    host: "localhost",
-    database: "speedy",
-    password: "12345",
-    port: 5432,
-    connector: "pg",
-    pooling: true,
-  });
+// const main = async (): Promise<void> => {
+//   const ds = new Dorm<PgConnector>({
+//     user: "postgres",
+//     host: "localhost",
+//     database: "speedy",
+//     password: "12345",
+//     port: 5432,
+//     connector: "pg",
+//     pooling: true,
+//   });
 
-  await ds.connect();
+//   await ds.connect();
 
-  const repo = ds.repository;
-  await repo.create({ a: 1 });
+//   const repo = ds.repository;
+//   await repo.create({ a: 1 });
 
-  await repo.find<Person>({
-    age: 12,
-    name: {
-      inq: ["june", "july"],
-    },
-    email: {
-      inq: ["saturday"],
-    },
-  });
+//   await repo.find(Person, {
+//     age: {
+//       inq: [24, 25],
+//     },
+//     name: {
+//       neq: "akadirdev",
+//     },
+//   });
 
-  await ds.disconnect();
-};
+//   await ds.disconnect();
+// };
 
-main();
+// main();
+
+export * from "./dorm";
+export * from "./connectors";
+export * from "./decorators";
+export * from "./filters";

@@ -1,2 +1,3 @@
 # dorm
-TypeScript compatible ORM Tool for Node.js
+
+Fast, extandable, powerfull ORM tool written with Typescript

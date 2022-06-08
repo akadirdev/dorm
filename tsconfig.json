@@ -4,6 +4,9 @@
     "rootDir": "src",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "ES5"
+    "declaration": true,
+    "module": "commonjs",
+    "target": "es2020",
+    "lib": ["es2020"]
   }
 }

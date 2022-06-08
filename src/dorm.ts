@@ -1,6 +1,10 @@
 import { BaseConnector, PgConnector } from "./connectors";
 import { WhereFilter } from "./filters/where.filter";
 
+export const CONNECTORS = {
+  pg: { class: (config: Config) => new PgConnector(config) },
+};
+
 export class Dorm<T extends BaseConnector> {
   private readonly connector: T;
 
@@ -18,10 +22,6 @@ export class Dorm<T extends BaseConnector> {
     await this.connector.disconnect();
   }
 }
-
-export const CONNECTORS = {
-  pg: { class: (config: Config) => new PgConnector(config) },
-};
 
 export type ConnectorType = "pg" | "mysql";
 
@@ -46,9 +46,22 @@ class Repository {
     return data;
   }
 
-  async find<T>(where: WhereFilter<T>, option?: any): Promise<T[]> {
-    return;
+  async find<T>(
+    entity: Class<T>,
+    where: WhereFilter<T>,
+    option?: any
+  ): Promise<T[]> {
+    return this.connector.find(where, entity, option);
   }
 }
 
 export type Class<T> = new (...args: any[]) => T;
+
+export function getObjectDef<T>(target: Class<T>) {
+  const modelName = Reflect.getMetadata("meta:model", target);
+  const propDef = Reflect.getMetadata("meta:property", target) as object;
+  propDef["0"] = modelName;
+  return {
+    [target.name]: propDef,
+  };
+}

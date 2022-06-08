@@ -1,15 +1,21 @@
 {
-  "name": "dorm",
-  "version": "0.0.1",
-  "description": "Fast, extandable, powerfull ORM tool",
-  "main": "index.js",
+  "name": "@akadirdev/dorm",
+  "version": "0.1.1",
+  "description": "Fast, extandable, powerfull ORM tool written with Typescript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean": "rm -rf ./dist",
     "prebuild": "npm run clean",
     "build": "tsc",
     "prestart": "npm run build",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.js",
+    "prepublish": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akadirdev/dorm.git"
   },
   "keywords": [
     "orm",
@@ -20,13 +26,25 @@
   ],
   "author": "akadirdev",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/akadirdev/dorm/issues"
+  },
+  "homepage": "https://github.com/akadirdev/dorm#readme",
   "dependencies": {
-    "pg": "^8.7.3",
     "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@types/node": "^17.0.25",
     "@types/pg": "^8.6.5",
+    "pg": "^8.7.3",
     "typescript": "^4.6.3"
+  },
+  "peerDependencies": {
+    "pg": "^8.7.3"
+  },
+  "peerDependenciesMeta": {
+    "pg": {
+      "optional": true
+    }
   }
 }
