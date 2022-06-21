@@ -1,11 +1,20 @@
-import { PgConnector } from "./connectors";
-import { model, property } from "./decorators";
+import { BaseConnector } from "./connectors";
+import { PgConnector } from "./connectors/pg.connector";
+import { model } from "./decorators/model.decorator";
+import { property } from "./decorators/property.decorator";
 import { Dorm } from "./dorm";
+import { DormError } from "./errors/dorm.error";
+import { EntityRepository } from "./repository";
+import { getModelSchema } from "./schemas/model.schema";
 
-@model("personel")
+@model({
+  name: "personel",
+})
 export class Person {
   @property({
+    type: "number",
     id: true,
+    nullable: true,
   })
   id?: number;
 
@@ -25,45 +34,226 @@ export class Person {
     name: "p_age",
     type: "number",
     nullable: true,
+    required: false,
   })
   age: number;
+}
 
-  constructor(data?: Partial<Person>) {
+@model({
+  name: "school",
+})
+export class Okul {
+  @property({
+    type: "string",
+    id: true,
+  })
+  id?: string;
+
+  @property({
+    name: "school_name",
+    type: "string",
+    required: true,
+  })
+  name: string;
+
+  constructor(data?: Partial<Okul>) {
     Object.assign(this, data ?? {});
   }
 }
 
-// const main = async (): Promise<void> => {
-//   const ds = new Dorm<PgConnector>({
-//     user: "postgres",
-//     host: "localhost",
-//     database: "speedy",
-//     password: "12345",
-//     port: 5432,
-//     connector: "pg",
-//     pooling: true,
-//   });
+// @model()
+// export class User {
+//   id?: number;
 
-//   await ds.connect();
+//   firstName: string;
 
-//   const repo = ds.repository;
-//   await repo.create({ a: 1 });
+//   constructor(data?: Partial<User>) {
+//     Object.assign(this, data ?? {});
+//   }
+// }
 
-//   await repo.find(Person, {
-//     age: {
-//       inq: [24, 25],
-//     },
-//     name: {
-//       neq: "akadirdev",
-//     },
-//   });
+// @model()
+// export class Doctor {
+//   id?: number;
 
-//   await ds.disconnect();
-// };
+//   firstName: string;
 
-// main();
+//   constructor(data?: Partial<Doctor>) {
+//     Object.assign(this, data ?? {});
+//   }
+// }
+export class PersonRepository extends EntityRepository<Person, "id"> {
+  constructor(ds: Dorm.Datasource) {
+    super(ds, Person);
+  }
 
-export * from "./dorm";
-export * from "./connectors";
-export * from "./decorators";
-export * from "./filters";
+  async getAllPerson() {}
+}
+
+const main = async (): Promise<void> => {
+  // const ds = new Dorm.Datasource<PgConnector>({
+  //   user: "postgres",
+  //   host: "localhost",
+  //   database: "speedy",
+  //   password: "12345",
+  //   port: 5432,
+  //   connector: "pg",
+  //   pooling: true,
+  // });
+  // await ds.connect();
+
+  const ds = await Dorm.createDatasource({
+    user: "postgres",
+    host: "localhost",
+    database: "speedy",
+    password: "12345",
+    port: 5432,
+    connector: "pg",
+    pooling: true,
+  });
+  await ds.connect();
+
+  const repo = ds.repository;
+  const tx = await repo.begin();
+  // const tx2 = await repo.begin();
+  try {
+    // const person = await repo.create(
+    //   Person,
+    //   {
+    //     name: "ad",
+    //     email: "akd@akd.com",
+    //     age: 100,
+    //   },
+    //   {
+    //     transaction: tx,
+    //   }
+    // );
+    // console.log("p", person);
+
+    // const person2 = await repo.create(
+    //   Person,
+    //   {
+    //     name: "ad",
+    //     email: "akd@akd.com",
+    //     age: 101,
+    //   },
+    //   {
+    //     transaction: tx2,
+    //   }
+    // );
+    // console.log("p2", person2);
+
+    // const persons = await repo.createAll(
+    //   Person,
+    //   [
+    //     {
+    //       name: "akd",
+    //       email: "akd@akd.com",
+    //       age: 110,
+    //     },
+    //     {
+    //       name: "akd2",
+    //       email: "akd@akd.com2",
+    //       age: 120,
+    //     },
+    //   ],
+    //   {
+    //     transaction: tx,
+    //   }
+    // );
+    // console.log("p2", persons);
+
+    await repo.deleteById(Person, 111, {
+      transaction: tx,
+    });
+
+    await tx.commit();
+  } catch (e: unknown) {
+    await tx.rollback();
+    console.error(e);
+    // if (DormError.isDormError(e)) {
+    //   console.log((e as DormError).stack);
+    //   console.log((e as DormError).name);
+    //   console.log((e as DormError).message);
+    //   console.log((e as DormError).code);
+    // }
+  }
+
+  // Transactional process
+  // const tx = await repo.begin();
+  // try {
+  //   const savedPerson = await repo.create(Person, {} as Person, {
+  //     transaction: tx,
+  //   });
+
+  //   savedPerson.age = 36;
+
+  //   await repo.update(Person, savedPerson, {
+  //     transaction: tx,
+  //   });
+  //   await tx.commit();
+  // } catch (e) {
+  //   await tx.rollback();
+  // }
+
+  // await repo.create({ a: 1 });
+  // await repo.find(Person, {
+  //   age: {
+  //     inq: [24, 25],
+  //   },
+  //   name: {
+  //     neq: "akadirdev",
+  //   },
+  // });
+  // await repo.findById(Person, 3);
+  // await repo.update(Person, { id: 2, name: "dev" } as Person);
+  // await repo.updateAll(Person, { name: "akadir" } as Person, { name: "dev" });
+
+  // await repo.findField(Person, {
+  //   inc: ["age", "email"],
+  // });
+
+  /**
+   * Entity Repository
+   * */
+  //  const prep = new PersonRepository(ds);
+  //  await prep.findById(123);
+
+  //  const prep2 = ds.getEntityRepository(Person, "id");
+  //  await prep2.findById(123);
+
+  // const querier = repo.querier(Person);
+  // querier.query("SELECT").fields(["id", "name"]).exec();
+  ///////////////
+  // const modelSchema = getModelSchema(Person);
+
+  // const prepo = new PersonRepository()
+  // console.log(modelSchema.getTableName());
+  ///////////////
+  // const pr = ds.getEntityRepository(Person);
+  // await pr.findById();
+  // await repo.findById(Person, 2);
+  // const pr = new PersonRepository();
+  // pr.getId(123);
+  await ds.disconnect();
+};
+
+main();
+
+// export * from "./dorm";
+// export * from "./connectors";
+// export * from "./decorators";
+// export * from "./filters";
+
+// export class EntityRepository<T, K extends keyof T> {
+//   constructor() {}
+//   getId(id: T[K]): void {
+//     console.log(id);
+//   }
+// }
+
+// export class PersonRepository extends EntityRepository<Person, "id"> {
+//   constructor() {
+//     super();
+//   }
+// }

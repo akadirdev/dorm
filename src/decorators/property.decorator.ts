@@ -1,55 +1,59 @@
 import "reflect-metadata";
+import { Entity, PropertyDefinition } from "../definitions";
+import { PropertySchema } from "../schemas/model.schema";
 
-export interface PropertyDefinition {
-  id?: boolean;
-  name?: string;
-  type?: string;
-  required?: boolean;
-  nullable?: boolean;
-  format?: string;
-}
+const getPropertiesMetadata = <T>(target: Entity<T>): PropertySchema<T> => {
+  return (
+    Reflect.getMetadata("meta:property", target) || ({} as PropertySchema<T>)
+  );
+};
 
-export const property = (propertyDefinition?: PropertyDefinition) => {
-  return (target: any, memberName: string) => {
+export const property = (propertyDefinition: PropertyDefinition) => {
+  return (target: Object, memberName: string) => {
     let currentValue: any = target[memberName];
     const classConstructor = target.constructor;
 
-    setDefaultPropertyDefinition(target, memberName, propertyDefinition);
+    const propDef = setPropertyDefinition(memberName, propertyDefinition);
 
-    const metadata =
-      Reflect.getMetadata("meta:property", classConstructor) ?? {};
-    metadata[memberName] = propertyDefinition;
+    const metadata = getPropertiesMetadata(classConstructor);
+    metadata[memberName] = propDef;
 
     Reflect.defineMetadata("meta:property", metadata, classConstructor);
 
-    Object.defineProperty(target, memberName, {
-      set: (v: any) => {
-        if (typeof v !== propertyDefinition.type) {
-          throw new Error(
-            `typeof new value: ${typeof v} is not compatible with propert definition of prop: ${
-              propertyDefinition.type
-            }!`
-          );
-        }
-        if (!propertyDefinition.nullable && v === null) {
-          throw new Error(`property: ${memberName} is not nullable!`);
-        }
-        if (propertyDefinition.required && !v) {
-          throw new Error(`property: ${memberName} is required!`);
-        }
-        currentValue = v;
-      },
-      get: () => currentValue,
-    });
+    // Object.defineProperty(target, memberName, {
+    //   set: (v: any) => {
+    //     if (typeof v !== propertyDefinition.type) {
+    //       throw new Error(
+    //         `typeof new value: ${typeof v} is not compatible with propert definition of prop: ${
+    //           propertyDefinition.type
+    //         }!`
+    //       );
+    //     }
+    //     if (!propertyDefinition.nullable && v === null) {
+    //       throw new Error(`property: ${memberName} is not nullable!`);
+    //     }
+    //     if (propertyDefinition.required && !v) {
+    //       throw new Error(`property: ${memberName} is required!`);
+    //     }
+    //     currentValue = v;
+    //   },
+    //   get: () => currentValue,
+    // });
   };
 };
 
-const setDefaultPropertyDefinition = (
-  target: any,
+const setPropertyDefinition = (
   memberName: string,
-  propDef?: PropertyDefinition
-): void => {
-  if (!propDef) propDef = {} as PropertyDefinition;
-  if (!propDef.name) propDef.name = memberName;
-  if (!propDef.type) propDef.type = typeof target[memberName];
+  propertyDefinition: PropertyDefinition
+): Required<PropertyDefinition> => {
+  const propDef: Required<PropertyDefinition> = {
+    id: propertyDefinition.id,
+    name: propertyDefinition.name ?? memberName,
+    nullable: propertyDefinition.nullable,
+    required: propertyDefinition.required ?? true,
+    type: propertyDefinition.type,
+    format: propertyDefinition.format,
+  };
+
+  return propDef;
 };

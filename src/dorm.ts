@@ -1,66 +1,67 @@
 import { BaseConnector, PgConnector } from "./connectors";
-import { WhereFilter } from "./filters/where.filter";
+import { Class } from "./definitions";
+import { DormError } from "./errors/dorm.error";
+import { EntityRepository, Repository } from "./repository";
 
-export const CONNECTORS = {
-  pg: { class: (config: Config) => new PgConnector(config) },
-};
+export namespace Dorm {
+  export const createDatasource = async <T extends BaseConnector>(
+    config: Config
+  ): Promise<Datasource<T>> => {
+    return new Datasource<T>(config);
+  };
 
-export class Dorm<T extends BaseConnector> {
-  private readonly connector: T;
+  const CONNECTORS = {
+    pg: { class: (config: Config) => new PgConnector(config) },
+  };
 
-  public readonly repository: Repository;
+  export class Datasource<T extends BaseConnector = BaseConnector> {
+    private readonly _connector: T;
 
-  constructor(config: Config) {
-    this.connector = CONNECTORS[config.connector].class(config);
-    this.repository = new Repository(this.connector);
+    public readonly repository: Repository;
+
+    constructor(config: Config) {
+      this._connector = CONNECTORS[config.connector].class(config);
+      this.repository = new Repository(this._connector);
+    }
+
+    public get connector(): T {
+      return this._connector;
+    }
+
+    public async connect(): Promise<void> {
+      await this._connector.connect();
+    }
+
+    public async disconnect(): Promise<void> {
+      await this._connector.disconnect();
+    }
+
+    public getEntityRepository<T, K extends keyof T>(
+      entity: Class<T>,
+      id: K
+    ): EntityRepository<T, K> {
+      return new EntityRepository(this, entity, id);
+    }
   }
 
-  public async connect(): Promise<void> {
-    await this.connector.connect();
-  }
-  public async disconnect(): Promise<void> {
-    await this.connector.disconnect();
+  type ConnectorType = "pg" | "mysql";
+
+  export interface Config {
+    user: string;
+    host: string;
+    database: string;
+    password: string;
+    port: number;
+    url?: string;
+    connector: ConnectorType;
+    pooling: boolean;
   }
 }
-
-export type ConnectorType = "pg" | "mysql";
-
-export interface Config {
-  user: string;
-  host: string;
-  database: string;
-  password: string;
-  port: number;
-  url?: string;
-  connector: ConnectorType;
-  pooling: boolean;
-}
-
-class Repository {
-  private readonly connector: BaseConnector;
-
-  constructor(connector: BaseConnector) {
-    this.connector = connector;
-  }
-  async create<T>(data: T, option?: any): Promise<T> {
-    return data;
-  }
-
-  async find<T>(
-    entity: Class<T>,
-    where: WhereFilter<T>,
-    option?: any
-  ): Promise<T[]> {
-    return this.connector.find(where, entity, option);
-  }
-}
-
-export type Class<T> = new (...args: any[]) => T;
 
 export function getObjectDef<T>(target: Class<T>) {
-  const modelName = Reflect.getMetadata("meta:model", target);
+  const modelDef = Reflect.getMetadata("meta:model", target);
   const propDef = Reflect.getMetadata("meta:property", target) as object;
-  propDef["0"] = modelName;
+  propDef["0"] = modelDef;
   return {
     [target.name]: propDef,
   };
