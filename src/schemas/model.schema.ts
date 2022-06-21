@@ -17,7 +17,7 @@ export const getModelSchema = <T>(target: Class<T>): ModelSchema<T> => {
   return newMs;
 };
 
-class ModelSchema<T> {
+export class ModelSchema<T> {
   private readonly _target: Class<T>;
   private readonly _modelDef: Required<ModelDefinition>;
   private readonly _propDef: PropertySchema<T>;

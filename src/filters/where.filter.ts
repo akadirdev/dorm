@@ -1,6 +1,6 @@
 export type WhereFilter<T> = Partial<Where<T>>;
 
-interface BaseWhereFilter<T> {
+export interface BaseWhereFilter<T> {
   inq?: T[];
   neq?: T;
 }

@@ -5,6 +5,7 @@ import { WhereFilter } from "../filters";
 import { BaseConnector, Transaction } from "./base.connector";
 import { v4 } from "uuid";
 import { getModelSchema } from "../schemas/model.schema";
+import { parseWhereFilter } from "./pg.parser";
 
 class PgTransaction implements Transaction {
   private readonly _poolClient: PoolClient;
@@ -152,9 +153,17 @@ export class PgConnector implements BaseConnector {
   async deleteAll<T>(
     where: WhereFilter<T>,
     Class: Class<T>,
-    options?: any
+    options?: Options
   ): Promise<void> {
-    throw new Error("Method not implemented.");
+    const schema = getModelSchema(Class);
+
+    let text = "DELETE FROM " + schema.getTableName() + " WHERE ";
+
+    const whereQuery = parseWhereFilter(where, schema);
+
+    text += whereQuery.text;
+
+    await this.chooseClient(options.transaction).query(text, whereQuery.values);
   }
 
   async connect(): Promise<void> {
