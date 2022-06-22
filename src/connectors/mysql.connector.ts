@@ -1,7 +1,11 @@
-import { WhereFilter } from "../filters";
+import { Options } from "../definitions";
+import { Filter, WhereFilter } from "../filters";
 import { BaseConnector, Transaction } from "./base.connector";
 
 export class MysqlConnector implements BaseConnector {
+  find<T>(filter: Filter<T>, target: Object, options?: Options): Promise<T[]> {
+    throw new Error("Method not implemented.");
+  }
   begin(): Promise<Transaction> {
     throw new Error("Method not implemented.");
   }
@@ -33,9 +37,6 @@ export class MysqlConnector implements BaseConnector {
     throw new Error("Method not implemented.");
   }
   findById<T, ID>(id: ID, target: Object, options?: any): Promise<T> {
-    throw new Error("Method not implemented.");
-  }
-  find<T>(where: WhereFilter<T>, target: Object, options?: any): Promise<T[]> {
     throw new Error("Method not implemented.");
   }
   connect(): Promise<void> {

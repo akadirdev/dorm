@@ -1,9 +1,31 @@
-import { Class, ModelDefinition } from "../definitions";
+import { Class, ModelDefinition, RelationDefinition } from "../definitions";
 import { PropertyDefinition } from "../definitions";
 
+export enum RelationTypes {
+  "ONE_TO_MANY",
+  "MANY_TO_MANY",
+  "MANY_TO_ONE",
+  "ONE_TO_ONE",
+}
+
 export type PropertySchema<T> = {
-  [P in keyof Required<T>]: Required<PropertyDefinition>;
+  [P in keyof T]: Required<PropertyDefinition>;
 };
+
+export type RelationSchema<T> = {
+  [P in keyof T]: Required<RelationDefinition<any>> & {
+    target: Class<any>;
+    relationType: RelationTypes;
+  };
+};
+
+export interface Schema<T> {
+  [model: string]: {
+    _modelDef: Required<ModelDefinition>;
+    _propDef: PropertySchema<T>;
+    _relationDef?: RelationSchema<T>;
+  };
+}
 
 const modelSchemaMap = new Map<string, ModelSchema<any>>();
 
@@ -21,11 +43,50 @@ export class ModelSchema<T> {
   private readonly _target: Class<T>;
   private readonly _modelDef: Required<ModelDefinition>;
   private readonly _propDef: PropertySchema<T>;
+  private readonly _relationDef: RelationSchema<T>;
 
   constructor(target: Class<T>) {
     this._modelDef = Reflect.getMetadata("meta:model", target);
     this._propDef = Reflect.getMetadata("meta:property", target);
+    this._relationDef = Reflect.getMetadata("meta:relation", target);
     this._target = target;
+  }
+
+  getAllSchema(): Schema<T> {
+    return {
+      [this._target.name]: {
+        _modelDef: this._modelDef,
+        _propDef: this._propDef,
+        _relationDef: this._relationDef,
+      },
+    };
+  }
+
+  getRefererColumn(key: keyof T): string {
+    const relation = this._relationDef[key];
+    const relSchema = getModelSchema(relation.target);
+    return relSchema.getColumnName(relation.refererName);
+  }
+
+  getRelType(key: keyof T): "object" | "array" {
+    return this._relationDef[key].type;
+  }
+
+  getRelationType(key: keyof T): RelationTypes {
+    return this._relationDef[key].relationType;
+  }
+
+  getRelationClass<P>(key: keyof T): Class<P> {
+    return this._relationDef[key].target;
+  }
+
+  getRelationReferer(key: keyof T): string {
+    return this._relationDef[key].refererName as string;
+  }
+
+  isRelationKey(key: keyof T): boolean {
+    const keys = Object.keys(this._relationDef ?? {});
+    return Boolean(keys.find((f) => f === key));
   }
 
   getTableName(): string {
@@ -56,6 +117,12 @@ export class ModelSchema<T> {
         return propDef.name;
       }
     }
+  }
+
+  getPropNameFromColumnName(cName: string): string {
+    return Object.keys(this._propDef).filter(
+      (f) => this._propDef[f].name === cName
+    )[0];
   }
 
   getColumnNames(): string[] {
@@ -98,9 +165,13 @@ export class ModelSchema<T> {
   createInstances(objects: T[]): T[] {
     return objects.map((m) => {
       if (m instanceof this._target) return m;
-
+      const obj = {};
       const x = new this._target();
-      Object.assign(x, m);
+      for (const key in m) {
+        const p = this.getPropNameFromColumnName(key);
+        obj[p] = m[key];
+      }
+      Object.assign(x, obj);
       return x;
     });
   }

@@ -5,6 +5,11 @@ export interface BaseWhereFilter<T> {
   neq?: T;
 }
 
+type Prop<T, P extends keyof T> = T[P] extends Array<infer Item> ? Item : T[P];
+
 type Where<T> = {
-  [Property in keyof T]: T[Property] | BaseWhereFilter<T[Property]>;
+  [Property in keyof Partial<T>]:
+    | T[Property]
+    | BaseWhereFilter<T[Property]>
+    | Where<Prop<T, Property>>;
 };

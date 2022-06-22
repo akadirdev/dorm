@@ -1,11 +1,18 @@
 import { PoolClient, Pool } from "pg";
 import { Class, Options } from "../definitions";
 import { Dorm, getObjectDef } from "../dorm";
-import { WhereFilter } from "../filters";
+import { Filter, getNeededColumnsString, WhereFilter } from "../filters";
 import { BaseConnector, Transaction } from "./base.connector";
 import { v4 } from "uuid";
-import { getModelSchema } from "../schemas/model.schema";
+import {
+  getModelSchema,
+  ModelSchema,
+  RelationTypes,
+} from "../schemas/model.schema";
 import { parseWhereFilter } from "./pg.parser";
+import { IncludeFilter } from "../filters/include.filter";
+
+type Pr<T> = T extends Array<infer I> ? I : T;
 
 class PgTransaction implements Transaction {
   private readonly _poolClient: PoolClient;
@@ -178,64 +185,106 @@ export class PgConnector implements BaseConnector {
   }
 
   async find<T>(
-    where: WhereFilter<T>,
+    filter: Filter<T>,
     target: Class<T>,
-    options?: any
+    options?: Options
   ): Promise<T[]> {
-    const modelSchema = getObjectDef(target);
-    console.log(modelSchema);
-    console.log(where);
+    const schema = getModelSchema(target);
 
-    let text = "SELECT * FROM " + modelSchema[target.name]["0"];
+    let text =
+      "SELECT " +
+      getNeededColumnsString(target, filter.field) +
+      " FROM " +
+      schema.getTableName() +
+      " t0";
 
-    let whereText = "";
-    let paramCount = 1;
-    let values = [];
-    for (const key in where) {
-      if (values.length) whereText += " AND ";
-      if (typeof where[key] !== "object") {
-        console.log("obje değil");
-        whereText +=
-          "" +
-          modelSchema[target.name][key as string]["name"] +
-          " = $" +
-          paramCount++;
-        values.push(where[key]);
-      } else {
-        const commandObj = where[key];
-        const commandKey = Object.keys(commandObj);
+    const whereQuery = parseWhereFilter(filter.where, schema);
 
-        if (commandKey[0] === "inq") {
-          whereText +=
-            "" + modelSchema[target.name][key as string]["name"] + " in (";
+    for (const [i, pgJoin] of (whereQuery.joins ?? []).entries()) {
+      const refererProp = pgJoin.refererProp;
+      const joinSchema = pgJoin.joinSchema;
+      text +=
+        " JOIN " +
+        joinSchema.getTableName() +
+        " t" +
+        (i + 1) +
+        " ON t" +
+        (i + 1) +
+        "." +
+        schema.getRefererColumn(refererProp as keyof T) +
+        " = t0." +
+        schema.getIdColumnName();
+    }
 
-          whereText += where[key][commandKey[0]].map((m) => "$" + paramCount++);
+    if (whereQuery.text.length) {
+      text += " WHERE " + whereQuery.text;
+    }
 
-          whereText += ")";
-          values.push(...where[key][commandKey[0]]);
-        } else if (commandKey[0] === "neq") {
-          whereText +=
-            "" +
-            modelSchema[target.name][key as string]["name"] +
-            " != $" +
-            paramCount++;
-          values.push(where[key][commandKey[0]]);
+    text += " GROUP BY t0." + schema.getIdColumnName();
+
+    console.log("text: ", text);
+    console.log("values: ", whereQuery.values);
+
+    const res = await this.chooseClient(options?.transaction).query(
+      text,
+      whereQuery.values
+    );
+
+    const datas = schema.createInstances(res.rows);
+
+    await this.includeRelations(datas, schema, filter.relations);
+
+    return datas;
+  }
+
+  private async includeRelations<T>(
+    parentObjects: T[],
+    schema: ModelSchema<T>,
+    include?: IncludeFilter<T, keyof T>,
+    options?: Options
+  ): Promise<void> {
+    if (!include?.length) return;
+
+    const relations = await Promise.all(
+      include.map((m) => {
+        const target = schema.getRelationClass(m);
+        return this.find(
+          {
+            where: {
+              [schema.getRelationReferer(m)]: {
+                inq: parentObjects.map((m) => m[schema.getIdPropName()]),
+              },
+            },
+          },
+          target,
+          options
+        );
+      })
+    );
+
+    for (const [i, incKey] of include.entries()) {
+      const relType = schema.getRelType(incKey);
+
+      if (relType === "array")
+        parentObjects.map((m) => {
+          m[incKey] = [] as unknown as T[keyof T];
+        });
+
+      relations[i].map((m) => {
+        const found = parentObjects.find(
+          (f) =>
+            f[schema.getIdPropName()] === m[schema.getRelationReferer(incKey)]
+        );
+
+        if (found) {
+          const relType = schema.getRelType(incKey);
+
+          if (relType === "array") {
+            (found[incKey] as unknown as Array<any>).push(m);
+          }
         }
-      }
+      });
     }
-
-    if (whereText.length) {
-      text += " WHERE " + whereText;
-    }
-    console.log(text);
-    // console.log(whereText);
-    console.log(values);
-
-    const res = await this._pool.query(text, values);
-
-    console.log("res", res.rows);
-
-    return [];
   }
 
   async findById<T, ID>(id: ID, target: Class<T>, options?: any): Promise<T> {

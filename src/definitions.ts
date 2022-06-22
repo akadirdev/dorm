@@ -30,3 +30,9 @@ export interface PropertyDefinition {
 export interface Options {
   transaction?: Transaction;
 }
+
+export interface RelationDefinition<T> {
+  // target?: Class<T>;
+  type?: Extract<ColumnTypes, "object" | "array">;
+  refererName?: keyof T;
+}

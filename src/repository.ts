@@ -1,7 +1,7 @@
 import { BaseConnector, Transaction } from "./connectors";
 import { Class, Options } from "./definitions";
 import { Dorm } from "./dorm";
-import { WhereFilter } from "./filters";
+import { Filter, WhereFilter } from "./filters";
 import { FieldFilter } from "./filters/field.filter";
 import { Querier } from "./querier";
 
@@ -51,10 +51,10 @@ export class Repository {
 
   async find<T>(
     entity: Class<T>,
-    where: WhereFilter<T>,
+    filter: Filter<T>,
     options?: Options
   ): Promise<T[]> {
-    return this.connector.find(where, entity, options);
+    return this.connector.find(filter, entity, options);
   }
 
   async findById<T, K extends keyof T>(

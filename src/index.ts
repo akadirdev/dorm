@@ -1,11 +1,69 @@
-import { BaseConnector } from "./connectors";
+import { BaseConnector, parseWhereFilter } from "./connectors";
 import { PgConnector } from "./connectors/pg.connector";
 import { model } from "./decorators/model.decorator";
+import { oneToMany } from "./decorators/one-to-many.decorator";
 import { property } from "./decorators/property.decorator";
 import { Dorm } from "./dorm";
 import { DormError } from "./errors/dorm.error";
 import { EntityRepository } from "./repository";
 import { getModelSchema } from "./schemas/model.schema";
+
+@model({ name: "book" })
+export class Book {
+  @property({
+    type: "string",
+    id: true,
+  })
+  id?: string;
+
+  @property({
+    name: "book_name",
+    type: "string",
+    required: true,
+  })
+  name: string;
+
+  @property({
+    name: "person_id",
+    type: "number",
+  })
+  personId?: number;
+}
+
+@model()
+export class Pencil {
+  @property({
+    type: "string",
+    id: true,
+  })
+  id?: string;
+
+  @property({
+    name: "seri_no",
+    type: "string",
+    required: true,
+  })
+  seriNo: string;
+
+  @property({
+    type: "string",
+    required: true,
+  })
+  color: string;
+
+  @property({
+    name: "p_lenght",
+    type: "number",
+    required: true,
+  })
+  lenght: number;
+
+  @property({
+    name: "user_id",
+    type: "number",
+  })
+  userId?: number;
+}
 
 @model({
   name: "personel",
@@ -37,29 +95,41 @@ export class Person {
     required: false,
   })
   age: number;
+
+  @oneToMany(Book, {
+    type: "array",
+    refererName: "personId",
+  })
+  books?: Book[];
+
+  @oneToMany(Pencil, {
+    type: "array",
+    refererName: "userId",
+  })
+  pencils?: Pencil[];
 }
 
-@model({
-  name: "school",
-})
-export class Okul {
-  @property({
-    type: "string",
-    id: true,
-  })
-  id?: string;
+// @model({
+//   name: "school",
+// })
+// export class Okul {
+//   @property({
+//     type: "string",
+//     id: true,
+//   })
+//   id?: string;
 
-  @property({
-    name: "school_name",
-    type: "string",
-    required: true,
-  })
-  name: string;
+//   @property({
+//     name: "school_name",
+//     type: "string",
+//     required: true,
+//   })
+//   name: string;
 
-  constructor(data?: Partial<Okul>) {
-    Object.assign(this, data ?? {});
-  }
-}
+//   constructor(data?: Partial<Okul>) {
+//     Object.assign(this, data ?? {});
+//   }
+// }
 
 // @model()
 // export class User {
@@ -114,70 +184,98 @@ const main = async (): Promise<void> => {
   await ds.connect();
 
   const repo = ds.repository;
-  const tx = await repo.begin();
-  // const tx2 = await repo.begin();
-  try {
-    // const person = await repo.create(
-    //   Person,
-    //   {
-    //     name: "ad",
-    //     email: "akd@akd.com",
-    //     age: 100,
-    //   },
-    //   {
-    //     transaction: tx,
-    //   }
-    // );
-    // console.log("p", person);
 
-    // const person2 = await repo.create(
-    //   Person,
-    //   {
-    //     name: "ad",
-    //     email: "akd@akd.com",
-    //     age: 101,
-    //   },
-    //   {
-    //     transaction: tx2,
-    //   }
-    // );
-    // console.log("p2", person2);
+  const sc = getModelSchema(Person).getAllSchema();
+  console.dir(sc, {
+    depth: null,
+  });
 
-    // const persons = await repo.createAll(
-    //   Person,
-    //   [
-    //     {
-    //       name: "akd",
-    //       email: "akd@akd.com",
-    //       age: 110,
-    //     },
-    //     {
-    //       name: "akd2",
-    //       email: "akd@akd.com2",
-    //       age: 120,
-    //     },
-    //   ],
-    //   {
-    //     transaction: tx,
-    //   }
-    // );
-    // console.log("p2", persons);
+  const persons = await repo.find(Person, {
+    where: {
+      books: {
+        name: "sad",
+      },
+      pencils: {
+        color: {
+          inq: ["blue", "red"],
+        },
+      },
+    },
+    relations: ["books", "pencils"],
+  });
 
-    await repo.deleteById(Person, 111, {
-      transaction: tx,
-    });
+  console.dir(persons, { depth: null });
 
-    await tx.commit();
-  } catch (e: unknown) {
-    await tx.rollback();
-    console.error(e);
-    // if (DormError.isDormError(e)) {
-    //   console.log((e as DormError).stack);
-    //   console.log((e as DormError).name);
-    //   console.log((e as DormError).message);
-    //   console.log((e as DormError).code);
-    // }
-  }
+  // // const tx = await repo.begin();
+
+  // // const tx2 = await repo.begin();
+  // try {
+  //   // const person = await repo.create(
+  //   //   Person,
+  //   //   {
+  //   //     name: "ad",
+  //   //     email: "akd@akd.com",
+  //   //     age: 100,
+  //   //     books: [
+  //   //       {
+  //   //         name: "War and Peace",
+  //   //       },
+  //   //     ],
+  //   //   },
+  //   //   {
+  //   //     transaction: tx,
+  //   //   }
+  //   // );
+  //   // console.log("p", person);
+
+  //   // const person2 = await repo.create(
+  //   //   Person,
+  //   //   {
+  //   //     name: "ad",
+  //   //     email: "akd@akd.com",
+  //   //     age: 101,
+  //   //   },
+  //   //   {
+  //   //     transaction: tx2,
+  //   //   }
+  //   // );
+  //   // console.log("p2", person2);
+
+  //   // const persons = await repo.createAll(
+  //   //   Person,
+  //   //   [
+  //   //     {
+  //   //       name: "akd",
+  //   //       email: "akd@akd.com",
+  //   //       age: 110,
+  //   //     },
+  //   //     {
+  //   //       name: "akd2",
+  //   //       email: "akd@akd.com2",
+  //   //       age: 120,
+  //   //     },
+  //   //   ],
+  //   //   {
+  //   //     transaction: tx,
+  //   //   }
+  //   // );
+  //   // console.log("p2", persons);
+
+  //   // await repo.deleteById(Person, 111, {
+  //   //   transaction: tx,
+  //   // });
+
+  //   await tx.commit();
+  // } catch (e: unknown) {
+  //   await tx.rollback();
+  //   console.error(e);
+  //   // if (DormError.isDormError(e)) {
+  //   //   console.log((e as DormError).stack);
+  //   //   console.log((e as DormError).name);
+  //   //   console.log((e as DormError).message);
+  //   //   console.log((e as DormError).code);
+  //   // }
+  // }
 
   // Transactional process
   // const tx = await repo.begin();

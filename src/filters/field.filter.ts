@@ -6,18 +6,27 @@ export interface FieldFilter<K> {
   exc?: K[];
 }
 
-export const getNeededColumns = <T, K extends keyof T>(
+export const getNeededColumnsString = <T, K extends keyof T>(
   target: Class<T>,
-  fieldFilter: FieldFilter<K>
+  fieldFilter?: FieldFilter<K>
+): string => {
+  const columns = getNeededColumns(target, fieldFilter);
+  return columns.map((m) => `t0.${m}`).join(",");
+};
+
+const getNeededColumns = <T, K extends keyof T>(
+  target: Class<T>,
+  fieldFilter?: FieldFilter<K>
 ): string[] => {
-  if (fieldFilter.inc?.length) {
-    return fieldFilter.inc.map((m) => String(m));
+  const ms = getModelSchema(target);
+
+  if (fieldFilter?.inc?.length) {
+    return fieldFilter.inc.map((m) => ms.getColumnName(m));
   }
 
-  const ms = getModelSchema(target);
   const definedColumns = ms.getColumnNames();
 
-  if (fieldFilter.exc?.length) {
+  if (fieldFilter?.exc?.length) {
     return definedColumns.filter(
       (f) => !fieldFilter.exc.find((ff) => ff === f)
     );
