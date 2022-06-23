@@ -60,9 +60,10 @@ export class Repository {
   async findById<T, K extends keyof T>(
     entity: Class<T>,
     id: T[K],
+    filter: Omit<Filter<T>, "where">,
     options?: Options
-  ): Promise<T> {
-    return this.connector.findById(id, entity, options);
+  ): Promise<T | null> {
+    return this.connector.findById(id, filter, entity, options);
   }
 
   async update<T>(entity: Class<T>, object: T, options?: Options): Promise<T> {
@@ -71,7 +72,7 @@ export class Repository {
 
   async updateAll<T>(
     entity: Class<T>,
-    object: T,
+    object: Partial<T>,
     where: WhereFilter<T>,
     options?: Options
   ): Promise<number> {
@@ -89,6 +90,6 @@ export class EntityRepository<T, K extends keyof T> {
   }
 
   async findById(id: T[K], options?: Options): Promise<T> {
-    return this._repo.findById(this._entity, id, options);
+    return this._repo.findById(this._entity, id, {}, options);
   }
 }

@@ -11,7 +11,7 @@ export interface PgQuery {
   joins?: PgJoin[];
 }
 
-interface ParseOptions {
+export interface ParseOptions {
   text: string;
   paramCount: number;
   values?: any[];
@@ -35,7 +35,7 @@ export const parseWhereFilter = <T>(
   return { text: p.text, values: p.values, joins: p.joins };
 };
 
-const parseWhere = <T>(
+export const parseWhere = <T>(
   whereFilter: WhereFilter<T>,
   schema: ModelSchema<T>,
   p: ParseOptions

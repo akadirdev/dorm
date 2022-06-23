@@ -1,1 +1,1 @@
-export type IncludeFilter<T, K extends keyof T> = Array<K>;
+export type RelationFilter<T, K extends keyof T> = Array<K>;

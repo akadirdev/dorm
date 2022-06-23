@@ -9,8 +9,8 @@ import {
   ModelSchema,
   RelationTypes,
 } from "../schemas/model.schema";
-import { parseWhereFilter } from "./pg.parser";
-import { IncludeFilter } from "../filters/include.filter";
+import { ParseOptions, parseWhere, parseWhereFilter } from "./pg.parser";
+import { RelationFilter } from "../filters/include.filter";
 
 type Pr<T> = T extends Array<infer I> ? I : T;
 
@@ -78,8 +78,8 @@ export class PgConnector implements BaseConnector {
     return tx;
   }
 
-  async insert<T>(object: T, Class: Class<T>, options?: Options): Promise<T> {
-    const schema = getModelSchema(Class);
+  async insert<T>(object: T, target: Class<T>, options?: Options): Promise<T> {
+    const schema = getModelSchema(target);
 
     const obj = schema.validateModel(object);
 
@@ -106,10 +106,10 @@ export class PgConnector implements BaseConnector {
 
   async insertAll<T>(
     objects: T[],
-    Class: Class<T>,
+    target: Class<T>,
     options?: Options
   ): Promise<T[]> {
-    const schema = getModelSchema(Class);
+    const schema = getModelSchema(target);
 
     const objs = schema.validateModels(objects);
 
@@ -142,10 +142,10 @@ export class PgConnector implements BaseConnector {
 
   async deleteById<T, ID>(
     id: ID,
-    Class: Class<T>,
+    target: Class<T>,
     options?: Options
   ): Promise<void> {
-    const schema = getModelSchema(Class);
+    const schema = getModelSchema(target);
 
     let text =
       "DELETE FROM " +
@@ -159,10 +159,10 @@ export class PgConnector implements BaseConnector {
 
   async deleteAll<T>(
     where: WhereFilter<T>,
-    Class: Class<T>,
+    target: Class<T>,
     options?: Options
   ): Promise<void> {
-    const schema = getModelSchema(Class);
+    const schema = getModelSchema(target);
 
     let text = "DELETE FROM " + schema.getTableName() + " WHERE ";
 
@@ -240,13 +240,13 @@ export class PgConnector implements BaseConnector {
   private async includeRelations<T>(
     parentObjects: T[],
     schema: ModelSchema<T>,
-    include?: IncludeFilter<T, keyof T>,
+    relation?: RelationFilter<T, keyof T>,
     options?: Options
   ): Promise<void> {
-    if (!include?.length) return;
+    if (!relation?.length) return;
 
     const relations = await Promise.all(
-      include.map((m) => {
+      relation.map((m) => {
         const target = schema.getRelationClass(m);
         return this.find(
           {
@@ -262,7 +262,7 @@ export class PgConnector implements BaseConnector {
       })
     );
 
-    for (const [i, incKey] of include.entries()) {
+    for (const [i, incKey] of relation.entries()) {
       const relType = schema.getRelType(incKey);
 
       if (relType === "array")
@@ -287,149 +287,124 @@ export class PgConnector implements BaseConnector {
     }
   }
 
-  async findById<T, ID>(id: ID, target: Class<T>, options?: any): Promise<T> {
-    const modelSchema = getObjectDef(target);
-
-    let idName: string;
-    for (const key in modelSchema[target.name]) {
-      if (modelSchema[target.name][key].id) {
-        idName = modelSchema[target.name][key].name;
-      }
-    }
+  async findById<T, ID>(
+    id: ID,
+    filter: Omit<Filter<T>, "where">,
+    target: Class<T>,
+    options?: Options
+  ): Promise<T | null> {
+    const schema = getModelSchema(target);
 
     let text =
-      "SELECT * FROM " +
-      modelSchema[target.name]["0"] +
-      " where " +
-      idName +
-      " = " +
-      id +
-      "";
+      "SELECT " +
+      getNeededColumnsString(target, filter.field) +
+      " FROM " +
+      schema.getTableName() +
+      " t0 WHERE t0." +
+      schema.getIdColumnName() +
+      " = $1";
 
-    console.log(text);
-
-    const res = await this._pool.query(text);
-
-    console.log(res.rows);
-
-    return res.rows[0];
-  }
-
-  async update<T>(object: T, target: Class<T>, options?: any): Promise<T> {
-    const modelSchema = getObjectDef(target);
-
-    let idColumnName: string;
-    let idPropName: string;
-    for (const key in modelSchema[target.name]) {
-      if (modelSchema[target.name][key].id) {
-        idColumnName = modelSchema[target.name][key].name;
-        idPropName = key;
-      }
-    }
-
-    if (!idColumnName)
-      throw new Error(`Entity:${target.name} has no id property!`);
-
-    if (!object[idColumnName])
-      throw new Error(`Given object has empty id property!`);
-
-    const id = object[idPropName];
-    delete object[idPropName];
-    let text = "UPDATE " + modelSchema[target.name]["0"];
-    for (const key of Object.keys(object)) {
-      const keyName = modelSchema[target.name][key]["name"];
-      const keyType = modelSchema[target.name][key]["type"];
-
-      if (keyType === "string")
-        text += " SET " + keyName + " = '" + object[key] + "'";
-      else text += " SET " + keyName + " = " + object[key];
-    }
-
-    text += " WHERE " + idColumnName + " = " + id;
-
-    console.log(text);
-
-    const res = await this._pool.query(text);
-
-    console.log(res.rows);
-
-    return object;
-  }
-
-  async updateAll<T>(
-    object: T,
-    where: WhereFilter<T>,
-    target: Class<T>,
-    options?: any
-  ): Promise<number> {
-    const modelSchema = getObjectDef(target);
-
-    let idColumnName: string;
-    let idPropName: string;
-    for (const key in modelSchema[target.name]) {
-      if (modelSchema[target.name][key].id) {
-        idColumnName = modelSchema[target.name][key].name;
-        idPropName = key;
-      }
-    }
-
-    if (object[idPropName]) delete object[idPropName];
-
-    let text = "UPDATE " + modelSchema[target.name]["0"];
-    for (const key of Object.keys(object)) {
-      const keyName = modelSchema[target.name][key]["name"];
-      const keyType = modelSchema[target.name][key]["type"];
-
-      if (keyType === "string")
-        text += " SET " + keyName + " = '" + object[key] + "'";
-      else text += " SET " + keyName + " = " + object[key];
-    }
-
-    let whereText = "";
-    let paramCount = 1;
-    let values = [];
-    for (const key in where) {
-      if (values.length) whereText += " AND ";
-      if (typeof where[key] !== "object") {
-        console.log("obje değil");
-        whereText +=
-          "" +
-          modelSchema[target.name][key as string]["name"] +
-          " = $" +
-          paramCount++;
-        values.push(where[key]);
-      } else {
-        const commandObj = where[key];
-        const commandKey = Object.keys(commandObj);
-
-        if (commandKey[0] === "inq") {
-          whereText +=
-            "" + modelSchema[target.name][key as string]["name"] + " in (";
-
-          whereText += where[key][commandKey[0]].map((m) => "$" + paramCount++);
-
-          whereText += ")";
-          values.push(...where[key][commandKey[0]]);
-        } else if (commandKey[0] === "neq") {
-          whereText +=
-            "" +
-            modelSchema[target.name][key as string]["name"] +
-            " != $" +
-            paramCount++;
-          values.push(where[key][commandKey[0]]);
-        }
-      }
-    }
-
-    text += " WHERE " + whereText;
+    const values = [id];
 
     console.log(text);
     console.log(values);
 
-    const res = await this._pool.query(text, values);
+    const res = await this.chooseClient(options?.transaction).query(
+      text,
+      values
+    );
 
-    console.log(res.rows);
+    if (!res.rowCount) return null;
 
-    return 4;
+    const datas = schema.createInstances(res.rows);
+
+    await this.includeRelations(datas, schema, filter.relations);
+
+    return datas[0];
+  }
+
+  async update<T>(object: T, target: Class<T>, options?: Options): Promise<T> {
+    const schema = getModelSchema(target);
+
+    const idProp = schema.getIdPropName();
+    if (!object[idProp]) throw new Error(`Given object has empty id property!`);
+
+    const id = object[idProp];
+    delete object[idProp];
+
+    let paramCount = 0;
+
+    let text = "UPDATE " + schema.getTableName();
+    const values = [];
+
+    for (const key in object) {
+      text += " SET " + schema.getColumnName(key) + " = $" + ++paramCount;
+      values.push(object[key]);
+    }
+
+    text += " WHERE " + schema.getIdColumnName() + " = $" + ++paramCount;
+    values.push(id);
+
+    console.log(text);
+    console.log(values);
+
+    const res = await this.chooseClient(options?.transaction).query(
+      text,
+      values
+    );
+
+    console.log("res.rowCount", res.rowCount);
+
+    if (!res.rowCount) throw new Error(`No affected row!`);
+
+    object[idProp] = id;
+
+    return schema.createInstances([object])[0];
+  }
+
+  async updateAll<T>(
+    object: Partial<T>,
+    where: WhereFilter<T>,
+    target: Class<T>,
+    options?: Options
+  ): Promise<number> {
+    const schema = getModelSchema(target);
+
+    const idProp = schema.getIdPropName();
+    if (object[idProp]) delete object[idProp];
+
+    let paramCount = 0;
+
+    let text = "UPDATE " + schema.getTableName();
+    const values = [];
+
+    // TODO: joinable update
+
+    for (const key in object) {
+      text += " SET " + schema.getColumnName(key) + " = $" + ++paramCount;
+      values.push(object[key]);
+    }
+
+    const parserOpt = {
+      paramCount: paramCount,
+      tableCount: 0,
+      text: "",
+      values: values,
+      joins: [],
+    } as ParseOptions;
+
+    parseWhere(where, schema, parserOpt);
+
+    text += " WHERE " + parserOpt.text;
+
+    console.log(text);
+    console.log(parserOpt.values);
+
+    const res = await this.chooseClient(options?.transaction).query(
+      text,
+      parserOpt.values
+    );
+
+    return res.rowCount;
   }
 }
