@@ -1,20 +1,26 @@
 import { BaseWhereFilter, WhereFilter } from "../filters/where.filter";
 import { getModelSchema, ModelSchema } from "../schemas/model.schema";
 
+export type TableSymbol = `t${number}`;
+
 export interface PgJoin {
   joinSchema: ModelSchema<any>;
+  joinTableSymbol: TableSymbol;
   refererProp: string;
+  parentSchema: ModelSchema<any>;
+  parentTableSymbol: TableSymbol;
 }
+
 export interface PgQuery {
   text: string;
-  values?: any[];
-  joins?: PgJoin[];
+  values: any[];
+  joins: PgJoin[];
 }
 
 export interface ParseOptions {
   text: string;
   paramCount: number;
-  values?: any[];
+  values: any[];
   tableCount: number;
   joins: PgJoin[];
 }
@@ -40,7 +46,7 @@ export const parseWhere = <T>(
   schema: ModelSchema<T>,
   p: ParseOptions
 ): void => {
-  const tName = `t${p.tableCount}`;
+  const tName: TableSymbol = `t${p.tableCount}`;
 
   for (const key in whereFilter) {
     if (p.values.length && !p.text.endsWith(" AND ")) p.text += " AND ";
@@ -56,6 +62,9 @@ export const parseWhere = <T>(
         p.joins.push({
           joinSchema: targetSchema,
           refererProp: key,
+          parentSchema: schema,
+          parentTableSymbol: tName,
+          joinTableSymbol: `t${p.tableCount}`,
         });
       parseWhere(whereFilter[key], targetSchema, p);
     } else {

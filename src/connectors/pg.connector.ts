@@ -164,11 +164,37 @@ export class PgConnector implements BaseConnector {
   ): Promise<void> {
     const schema = getModelSchema(target);
 
-    let text = "DELETE FROM " + schema.getTableName() + " WHERE ";
+    let text = "DELETE FROM " + schema.getTableName() + " t0";
 
     const whereQuery = parseWhereFilter(where, schema);
 
-    text += whereQuery.text;
+    let joinTables = "";
+    let joinWhere = "";
+    for (const [i, join] of whereQuery.joins.entries()) {
+      if (i > 0) {
+        joinTables += ", ";
+        joinWhere += " AND ";
+      }
+      joinTables += join.joinSchema.getTableName() + " " + join.joinTableSymbol;
+      joinWhere +=
+        join.parentTableSymbol +
+        "." +
+        join.parentSchema.getIdColumnName() +
+        " = " +
+        join.joinTableSymbol +
+        "." +
+        join.parentSchema.getRefererColumn(join.refererProp);
+    }
+
+    if (joinTables.length) {
+      text += " USING " + joinTables;
+      text += " WHERE " + joinWhere + " AND " + whereQuery.text;
+    } else {
+      text += " WHERE " + whereQuery.text;
+    }
+
+    console.log("text: ", text);
+    console.log("values: ", whereQuery.values);
 
     await this.chooseClient(options.transaction).query(text, whereQuery.values);
   }
@@ -200,27 +226,28 @@ export class PgConnector implements BaseConnector {
 
     const whereQuery = parseWhereFilter(filter.where, schema);
 
-    for (const [i, pgJoin] of (whereQuery.joins ?? []).entries()) {
-      const refererProp = pgJoin.refererProp;
-      const joinSchema = pgJoin.joinSchema;
+    for (const [i, join] of whereQuery.joins.entries()) {
       text +=
         " JOIN " +
-        joinSchema.getTableName() +
-        " t" +
-        (i + 1) +
-        " ON t" +
-        (i + 1) +
+        join.joinSchema.getTableName() +
+        " " +
+        join.joinTableSymbol +
+        " ON " +
+        join.joinTableSymbol +
         "." +
-        schema.getRefererColumn(refererProp as keyof T) +
-        " = t0." +
-        schema.getIdColumnName();
+        join.parentSchema.getRefererColumn(join.refererProp) +
+        " = " +
+        join.parentTableSymbol +
+        "." +
+        join.parentSchema.getIdColumnName();
     }
 
     if (whereQuery.text.length) {
       text += " WHERE " + whereQuery.text;
     }
 
-    text += " GROUP BY t0." + schema.getIdColumnName();
+    if (whereQuery.joins.length)
+      text += " GROUP BY t0." + schema.getIdColumnName();
 
     console.log("text: ", text);
     console.log("values: ", whereQuery.values);
@@ -373,15 +400,13 @@ export class PgConnector implements BaseConnector {
     const idProp = schema.getIdPropName();
     if (object[idProp]) delete object[idProp];
 
-    let paramCount = 0;
+    let paramCount = 1;
 
-    let text = "UPDATE " + schema.getTableName();
+    let text = "UPDATE " + schema.getTableName() + " t0";
     const values = [];
 
-    // TODO: joinable update
-
     for (const key in object) {
-      text += " SET " + schema.getColumnName(key) + " = $" + ++paramCount;
+      text += " SET t0." + schema.getColumnName(key) + " = $" + paramCount++;
       values.push(object[key]);
     }
 
@@ -395,7 +420,30 @@ export class PgConnector implements BaseConnector {
 
     parseWhere(where, schema, parserOpt);
 
-    text += " WHERE " + parserOpt.text;
+    let joinTables = "";
+    let joinWhere = "";
+    for (const [i, join] of parserOpt.joins.entries()) {
+      if (i > 0) {
+        joinTables += ", ";
+        joinWhere += " AND ";
+      }
+      joinTables += join.joinSchema.getTableName() + " " + join.joinTableSymbol;
+      joinWhere +=
+        join.parentTableSymbol +
+        "." +
+        join.parentSchema.getIdColumnName() +
+        " = " +
+        join.joinTableSymbol +
+        "." +
+        join.parentSchema.getRefererColumn(join.refererProp);
+    }
+
+    if (joinTables.length) {
+      text += " FROM " + joinTables;
+      text += " WHERE " + joinWhere + parserOpt.text;
+    } else {
+      text += " WHERE " + parserOpt.text;
+    }
 
     console.log(text);
     console.log(parserOpt.values);

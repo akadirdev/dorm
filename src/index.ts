@@ -190,19 +190,22 @@ const main = async (): Promise<void> => {
     depth: null,
   });
 
-  const persons = await repo.find(Person, {
-    where: {
-      books: {
-        name: "sad",
-      },
+  const persons = await repo.updateAll(
+    Person,
+    {
+      name: "john",
+    },
+    {
       pencils: {
         color: {
-          inq: ["blue", "red"],
+          inq: ["red", "blue"],
         },
       },
-    },
-    relations: ["books", "pencils"],
-  });
+      books: {
+        name: "but",
+      },
+    }
+  );
 
   console.dir(persons, { depth: null });
 

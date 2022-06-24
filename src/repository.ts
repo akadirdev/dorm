@@ -49,6 +49,14 @@ export class Repository {
     await this.connector.deleteById(id, entity, options);
   }
 
+  async deleteAll<T>(
+    entity: Class<T>,
+    where: WhereFilter<T>,
+    options?: Options
+  ): Promise<void> {
+    await this.connector.deleteAll(where, entity, options);
+  }
+
   async find<T>(
     entity: Class<T>,
     filter: Filter<T>,
