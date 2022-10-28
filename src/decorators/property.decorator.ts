@@ -10,7 +10,7 @@ const getPropertiesMetadata = <T>(target: Entity<T>): PropertySchema<T> => {
 
 export const property = (propertyDefinition: PropertyDefinition) => {
   return (target: Object, memberName: string) => {
-    let currentValue: any = target[memberName];
+    // let currentValue: any = target[memberName];
     const classConstructor = target.constructor;
 
     const propDef = setPropertyDefinition(memberName, propertyDefinition);

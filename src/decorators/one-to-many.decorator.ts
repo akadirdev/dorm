@@ -1,15 +1,6 @@
 import "reflect-metadata";
-import {
-  Class,
-  Entity,
-  PropertyDefinition,
-  RelationDefinition,
-} from "../definitions";
-import {
-  PropertySchema,
-  RelationSchema,
-  RelationTypes,
-} from "../schemas/model.schema";
+import { Class, Entity, RelationDefinition } from "../definitions";
+import { RelationSchema, RelationTypes } from "../schemas/model.schema";
 
 const getRelationMetadata = <T>(target: Entity<T>): RelationSchema<T> => {
   return (
@@ -19,10 +10,10 @@ const getRelationMetadata = <T>(target: Entity<T>): RelationSchema<T> => {
 
 export const oneToMany = <T>(
   classObj: Class<T>,
-  relationDefinition: RelationDefinition<T>,
+  relationDefinition: RelationDefinition<T>
 ) => {
   return (target: Object, memberName: string) => {
-    let currentValue: any = target[memberName];
+    // let currentValue: any = target[memberName];
     const classConstructor = target.constructor;
 
     const relationDef = setRelationDefinition(memberName, relationDefinition);

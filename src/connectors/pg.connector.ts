@@ -147,7 +147,7 @@ export class PgConnector implements BaseConnector {
   ): Promise<void> {
     const schema = getModelSchema(target);
 
-    let text =
+    const text =
       "DELETE FROM " +
       schema.getTableName() +
       " WHERE " +
@@ -322,7 +322,7 @@ export class PgConnector implements BaseConnector {
   ): Promise<T | null> {
     const schema = getModelSchema(target);
 
-    let text =
+    const text =
       "SELECT " +
       getNeededColumnsString(target, filter.field) +
       " FROM " +

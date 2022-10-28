@@ -2,7 +2,6 @@ import { BaseConnector, Transaction } from "./connectors";
 import { Class, Options } from "./definitions";
 import { Dorm } from "./dorm";
 import { Filter, WhereFilter } from "./filters";
-import { FieldFilter } from "./filters/field.filter";
 import { Querier } from "./querier";
 
 export class Repository {
@@ -92,6 +91,7 @@ export class EntityRepository<T, K extends keyof T> {
   private readonly _entity: Class<T>;
   private readonly _repo: Repository;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(ds: Dorm.Datasource, entity: Class<T>, id?: K) {
     this._repo = ds.repository;
     this._entity = entity;

@@ -8,7 +8,7 @@ export type QuerierCommands =
 
 export class Querier<T, K extends keyof T> {
   private _entity: Class<T>;
-  private _queryString: string = "";
+  private _queryString = "";
 
   constructor(entity: Class<T>) {
     this._entity = entity;

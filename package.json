@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .ts",
     "clean": "rm -rf ./dist",
-    "prebuild": "npm run clean",
+    "prebuild": "npm run clean && npm run lint",
     "build": "tsc",
     "prestart": "npm run build",
     "start": "node ./dist/index.js",
@@ -25,7 +25,7 @@
     "typescript"
   ],
   "author": "akadirdev",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/akadirdev/dorm/issues"
   },
