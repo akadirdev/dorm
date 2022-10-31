@@ -128,6 +128,48 @@ const book = await repo.find(Book, {
   });
 ```
 
+### Transactions
+
+Start transactional operations with `.begin()`. Use returned object from function in repository's other functions as parameter.
+
+```TypeScript
+const tx = await repo.begin();
+```
+
+Transaction object has two main methods:
+
+- commit
+- rollback
+
+Example usage of transactions:
+
+```TypeScript
+const tx = await repo.begin();
+
+try {
+  await repo.create(
+    Book,
+    { name: "Robinson Crusoe", authorId: 99 },
+    { transaction: tx }
+  );
+
+  await repo.deleteById(Book, 1000, { transaction: tx });
+
+  // write changes to db
+  await tx.commit();
+} catch (e) {
+  // An error occured, rollback all changes!
+  await tx.rollback();
+}
+```
+
+## What's next?
+
+- Relation support
+- Joinable queries
+- Increase test coverages
+- Custom Entity Repositories documentation
+
 ## License
 
 Copyright © 2022 Abdulkadir Dede.
