@@ -1,4 +1,4 @@
-import { BaseWhereFilter, WhereFilter } from "../filters/where.filter";
+import { WhereFilter } from "../filters/where.filter";
 import { getModelSchema, ModelSchema } from "../schemas/model.schema";
 
 export type TableSymbol = `t${number}`;
@@ -74,7 +74,7 @@ export const parseWhere = <T>(
       if (commandKey === "inq") {
         p.text += tName + "." + schema.getColumnName(key) + " in (";
         p.text +=
-          whereFilter[key][commandKey].map((m) => "$" + p.paramCount++) + ")";
+          whereFilter[key][commandKey].map(() => "$" + p.paramCount++) + ")";
         p.values.push(...whereFilter[key][commandKey]);
       } else if (commandKey === "neq") {
         p.text +=

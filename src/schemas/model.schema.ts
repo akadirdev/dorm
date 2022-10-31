@@ -1,4 +1,8 @@
-import { Class, ModelDefinition, RelationDefinition } from "../definitions";
+import {
+  Constructor,
+  ModelDefinition,
+  RelationDefinition,
+} from "../definitions";
 import { PropertyDefinition } from "../definitions";
 
 export enum RelationTypes {
@@ -14,7 +18,7 @@ export type PropertySchema<T> = {
 
 export type RelationSchema<T> = {
   [P in keyof T]: Required<RelationDefinition<any>> & {
-    target: Class<any>;
+    target: Constructor<any>;
     relationType: RelationTypes;
   };
 };
@@ -29,7 +33,7 @@ export interface Schema<T> {
 
 const modelSchemaMap = new Map<string, ModelSchema<any>>();
 
-export const getModelSchema = <T>(target: Class<T>): ModelSchema<T> => {
+export const getModelSchema = <T>(target: Constructor<T>): ModelSchema<T> => {
   if (modelSchemaMap.has(target.name)) {
     const ms = modelSchemaMap.get(target.name);
     return ms as ModelSchema<T>;
@@ -40,12 +44,12 @@ export const getModelSchema = <T>(target: Class<T>): ModelSchema<T> => {
 };
 
 export class ModelSchema<T> {
-  private readonly _target: Class<T>;
+  private readonly _target: Constructor<T>;
   private readonly _modelDef: Required<ModelDefinition>;
   private readonly _propDef: PropertySchema<T>;
   private readonly _relationDef: RelationSchema<T>;
 
-  constructor(target: Class<T>) {
+  constructor(target: Constructor<T>) {
     this._modelDef = Reflect.getMetadata("meta:model", target);
     this._propDef = Reflect.getMetadata("meta:property", target);
     this._relationDef = Reflect.getMetadata("meta:relation", target);
@@ -76,7 +80,7 @@ export class ModelSchema<T> {
     return this._relationDef[key].relationType;
   }
 
-  getRelationClass<P>(key: keyof T): Class<P> {
+  getRelationClass<P>(key: keyof T): Constructor<P> {
     return this._relationDef[key].target;
   }
 

@@ -1,4 +1,4 @@
-import { Class } from "../definitions";
+import { Constructor } from "../definitions";
 import { getModelSchema } from "../schemas/model.schema";
 
 export interface FieldFilter<K> {
@@ -7,7 +7,7 @@ export interface FieldFilter<K> {
 }
 
 export const getNeededColumnsString = <T, K extends keyof T>(
-  target: Class<T>,
+  target: Constructor<T>,
   fieldFilter?: FieldFilter<K>
 ): string => {
   const columns = getNeededColumns(target, fieldFilter);
@@ -15,7 +15,7 @@ export const getNeededColumnsString = <T, K extends keyof T>(
 };
 
 const getNeededColumns = <T, K extends keyof T>(
-  target: Class<T>,
+  target: Constructor<T>,
   fieldFilter?: FieldFilter<K>
 ): string[] => {
   const ms = getModelSchema(target);

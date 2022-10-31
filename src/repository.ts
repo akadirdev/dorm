@@ -1,8 +1,6 @@
 import { BaseConnector, Transaction } from "./connectors";
-import { Class, Options } from "./definitions";
-import { Dorm } from "./dorm";
+import { Constructor, Options } from "./definitions";
 import { Filter, WhereFilter } from "./filters";
-import { Querier } from "./querier";
 
 export class Repository {
   private readonly connector: BaseConnector;
@@ -23,16 +21,16 @@ export class Repository {
     return this.connector.begin();
   }
 
-  querier = <T, K extends keyof T>(entity: Class<T>): Querier<T, K> => {
-    return new Querier(entity);
-  };
-
-  async create<T>(entity: Class<T>, data: T, options?: Options): Promise<T> {
+  async create<T>(
+    entity: Constructor<T>,
+    data: T,
+    options?: Options
+  ): Promise<T> {
     return this.connector.insert(data, entity, options);
   }
 
   async createAll<T>(
-    entity: Class<T>,
+    entity: Constructor<T>,
     data: T[],
     options?: Options
   ): Promise<T[]> {
@@ -41,7 +39,7 @@ export class Repository {
   }
 
   async deleteById<T, K extends keyof T>(
-    entity: Class<T>,
+    entity: Constructor<T>,
     id: T[K],
     options?: Options
   ): Promise<void> {
@@ -49,7 +47,7 @@ export class Repository {
   }
 
   async deleteAll<T>(
-    entity: Class<T>,
+    entity: Constructor<T>,
     where: WhereFilter<T>,
     options?: Options
   ): Promise<void> {
@@ -57,7 +55,7 @@ export class Repository {
   }
 
   async find<T>(
-    entity: Class<T>,
+    entity: Constructor<T>,
     filter: Filter<T>,
     options?: Options
   ): Promise<T[]> {
@@ -65,7 +63,7 @@ export class Repository {
   }
 
   async findById<T, K extends keyof T>(
-    entity: Class<T>,
+    entity: Constructor<T>,
     id: T[K],
     filter: Omit<Filter<T>, "where">,
     options?: Options
@@ -73,31 +71,20 @@ export class Repository {
     return this.connector.findById(id, filter, entity, options);
   }
 
-  async update<T>(entity: Class<T>, object: T, options?: Options): Promise<T> {
+  async update<T>(
+    entity: Constructor<T>,
+    object: T,
+    options?: Options
+  ): Promise<T> {
     return this.connector.update(object, entity, options);
   }
 
   async updateAll<T>(
-    entity: Class<T>,
+    entity: Constructor<T>,
     object: Partial<T>,
     where: WhereFilter<T>,
     options?: Options
   ): Promise<number> {
     return this.connector.updateAll(object, where, entity, options);
-  }
-}
-
-export class EntityRepository<T, K extends keyof T> {
-  private readonly _entity: Class<T>;
-  private readonly _repo: Repository;
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(ds: Dorm.Datasource, entity: Class<T>, id?: K) {
-    this._repo = ds.repository;
-    this._entity = entity;
-  }
-
-  async findById(id: T[K], options?: Options): Promise<T> {
-    return this._repo.findById(this._entity, id, {}, options);
   }
 }

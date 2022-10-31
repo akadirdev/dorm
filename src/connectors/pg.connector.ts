@@ -1,18 +1,12 @@
 import { PoolClient, Pool } from "pg";
-import { Class, Options } from "../definitions";
-import { Dorm, getObjectDef } from "../dorm";
+import { Constructor, Options } from "../definitions";
+import { DormConfig } from "../dorm";
 import { Filter, getNeededColumnsString, WhereFilter } from "../filters";
 import { BaseConnector, Transaction } from "./base.connector";
 import { v4 } from "uuid";
-import {
-  getModelSchema,
-  ModelSchema,
-  RelationTypes,
-} from "../schemas/model.schema";
+import { getModelSchema, ModelSchema } from "../schemas/model.schema";
 import { ParseOptions, parseWhere, parseWhereFilter } from "./pg.parser";
 import { RelationFilter } from "../filters/include.filter";
-
-type Pr<T> = T extends Array<infer I> ? I : T;
 
 class PgTransaction implements Transaction {
   private readonly _poolClient: PoolClient;
@@ -49,7 +43,7 @@ export class PgConnector implements BaseConnector {
   private readonly _pool: Pool;
   private _transactionCache: Map<string, PoolClient>;
 
-  constructor(config: Dorm.Config) {
+  constructor(config: DormConfig) {
     this._pool = new Pool({
       user: config.user,
       host: config.host,
@@ -78,7 +72,11 @@ export class PgConnector implements BaseConnector {
     return tx;
   }
 
-  async insert<T>(object: T, target: Class<T>, options?: Options): Promise<T> {
+  async insert<T>(
+    object: T,
+    target: Constructor<T>,
+    options?: Options
+  ): Promise<T> {
     const schema = getModelSchema(target);
 
     const obj = schema.validateModel(object);
@@ -106,7 +104,7 @@ export class PgConnector implements BaseConnector {
 
   async insertAll<T>(
     objects: T[],
-    target: Class<T>,
+    target: Constructor<T>,
     options?: Options
   ): Promise<T[]> {
     const schema = getModelSchema(target);
@@ -142,7 +140,7 @@ export class PgConnector implements BaseConnector {
 
   async deleteById<T, ID>(
     id: ID,
-    target: Class<T>,
+    target: Constructor<T>,
     options?: Options
   ): Promise<void> {
     const schema = getModelSchema(target);
@@ -159,7 +157,7 @@ export class PgConnector implements BaseConnector {
 
   async deleteAll<T>(
     where: WhereFilter<T>,
-    target: Class<T>,
+    target: Constructor<T>,
     options?: Options
   ): Promise<void> {
     const schema = getModelSchema(target);
@@ -212,7 +210,7 @@ export class PgConnector implements BaseConnector {
 
   async find<T>(
     filter: Filter<T>,
-    target: Class<T>,
+    target: Constructor<T>,
     options?: Options
   ): Promise<T[]> {
     const schema = getModelSchema(target);
@@ -226,7 +224,7 @@ export class PgConnector implements BaseConnector {
 
     const whereQuery = parseWhereFilter(filter.where, schema);
 
-    for (const [i, join] of whereQuery.joins.entries()) {
+    for (const join of whereQuery.joins) {
       text +=
         " JOIN " +
         join.joinSchema.getTableName() +
@@ -317,7 +315,7 @@ export class PgConnector implements BaseConnector {
   async findById<T, ID>(
     id: ID,
     filter: Omit<Filter<T>, "where">,
-    target: Class<T>,
+    target: Constructor<T>,
     options?: Options
   ): Promise<T | null> {
     const schema = getModelSchema(target);
@@ -350,7 +348,11 @@ export class PgConnector implements BaseConnector {
     return datas[0];
   }
 
-  async update<T>(object: T, target: Class<T>, options?: Options): Promise<T> {
+  async update<T>(
+    object: T,
+    target: Constructor<T>,
+    options?: Options
+  ): Promise<T> {
     const schema = getModelSchema(target);
 
     const idProp = schema.getIdPropName();
@@ -392,7 +394,7 @@ export class PgConnector implements BaseConnector {
   async updateAll<T>(
     object: Partial<T>,
     where: WhereFilter<T>,
-    target: Class<T>,
+    target: Constructor<T>,
     options?: Options
   ): Promise<number> {
     const schema = getModelSchema(target);
