@@ -1,7 +1,7 @@
 {
-  "name": "@akadirdev/dorm",
+  "name": "dormjs",
   "version": "0.1.1",
-  "description": "Fast, extandable, powerfull ORM tool written with Typescript",
+  "description": "A light-weight ORM tool written with Typescript for Node.js based on Data Mapper pattern.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -22,7 +22,13 @@
     "postgresql",
     "rdbms",
     "nodejs",
-    "typescript"
+    "typescript",
+    "data mapper",
+    "entity",
+    "repository",
+    "transaction",
+    "database",
+    "data"
   ],
   "author": "akadirdev",
   "license": "MIT",
