@@ -102,11 +102,11 @@ export class Book {
 }
 ```
 
-We started class definition with `@model` decorator and to decorated class properties with `@property` decorator.
+We started class definition with `@model` decorator and class properties with `@property` decorator.
 
 In `@property` decorator, we used name property for declare table real column name.
 
-> If table column name is class property name, no need to specify `name` property of `@property` decorator.
+> If table column name is same as class property name, no need to specify `name` property of `@property` decorator.
 
 In `@model` decorator, we can specify table name if table name is different from class name.
 
@@ -114,14 +114,14 @@ In `@model` decorator, we can specify table name if table name is different from
 
 ### Repository
 
-Get repository from dorm instance and use it for all CRUD operations.
+Get repository from dorm instance and use it for all CRUD operations of all defined entities.
 
 ```TypeScript
 const repo = dorm.getRepository();
 ```
 
 ```TypeScript
-const book = repo.find(Book, {
+const book = await repo.find(Book, {
     where: {
       name: "1984",
     },
