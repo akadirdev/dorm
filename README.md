@@ -5,10 +5,12 @@
 <p align="center">
   <img src="https://img.shields.io/github/license/akadirdev/dorm">
   <img src="https://img.shields.io/github/package-json/v/akadirdev/dorm">
+  <img src="https://img.shields.io/npm/dw/@dormjs/core">
   <img src="https://img.shields.io/github/last-commit/akadirdev/dorm">
   <a href="https://gitter.im/dorm-js/community">
     <img src="https://badges.gitter.im/dorm-js/community.svg" >
   </a>
+  <img src="https://dl.circleci.com/status-badge/img/gh/akadirdev/dorm/tree/master.svg?style=shield">
 </p>
 
 A light-weight ORM tool written with `Typescript` for Node.js based on `Data Mapper` pattern. Supports `PostgreSQL` for now.
