@@ -120,6 +120,8 @@ Get repository from dorm instance and use it for all CRUD operations of all defi
 const repo = dorm.getRepository();
 ```
 
+> `getRepository()` always returns a singleton repository instance.
+
 ```TypeScript
 const book = await repo.find(Book, {
     where: {
