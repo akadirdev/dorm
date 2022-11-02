@@ -1,6 +1,6 @@
 {
   "name": "@dormjs/core",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A light-weight ORM tool written with Typescript for Node.js based on Data Mapper pattern.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
