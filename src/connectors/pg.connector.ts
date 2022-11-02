@@ -92,7 +92,7 @@ export class PgConnector implements BaseConnector {
       ") RETURNING " +
       schema.getIdColumnName();
 
-    const res = await this.chooseClient(options.transaction).query(
+    const res = await this.chooseClient(options?.transaction).query(
       text,
       Object.values(obj)
     );
@@ -126,7 +126,7 @@ export class PgConnector implements BaseConnector {
     text += " RETURNING " + schema.getIdColumnName();
     const values = objs.flatMap((m) => Object.values(m));
 
-    const res = await this.chooseClient(options.transaction).query(
+    const res = await this.chooseClient(options?.transaction).query(
       text,
       values
     );
@@ -152,7 +152,7 @@ export class PgConnector implements BaseConnector {
       schema.getIdColumnName() +
       " = $1";
 
-    await this.chooseClient(options.transaction).query(text, [id]);
+    await this.chooseClient(options?.transaction).query(text, [id]);
   }
 
   async deleteAll<T>(
@@ -194,7 +194,10 @@ export class PgConnector implements BaseConnector {
     console.log("text: ", text);
     console.log("values: ", whereQuery.values);
 
-    await this.chooseClient(options.transaction).query(text, whereQuery.values);
+    await this.chooseClient(options?.transaction).query(
+      text,
+      whereQuery.values
+    );
   }
 
   async connect(): Promise<void> {
