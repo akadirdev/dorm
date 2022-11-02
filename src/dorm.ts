@@ -1,6 +1,5 @@
 import { BaseConnector, PgConnector } from "./connectors";
 import { Constructor } from "./definitions";
-import { EntityRepository } from "./entity-repository";
 import { Repository } from "./repository";
 
 const CONNECTORS = {
@@ -36,12 +35,12 @@ export class Dorm<T extends BaseConnector = BaseConnector> {
     await this._connector.disconnect();
   }
 
-  public getEntityRepository<T, K extends keyof T>(
-    entity: Constructor<T>,
-    id: K
-  ): EntityRepository<T, K> {
-    return new EntityRepository(this, entity, id);
-  }
+  // public getEntityRepository<T, K extends keyof T>(
+  //   entity: Constructor<T>,
+  //   id: K
+  // ): EntityRepository<T, K> {
+  //   return new EntityRepository(this, entity, id);
+  // }
 }
 
 export type ConnectorType = "pg" | "mysql";

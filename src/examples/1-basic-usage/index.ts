@@ -1,16 +1,18 @@
 import { dorm } from "./dorm";
-import { Person } from "./entities";
+import { User } from "./entities";
 
 export const basicUsage = async (): Promise<void> => {
   await dorm.connect();
 
   const repo = dorm.getRepository();
 
-  const persons = repo.find(Person, {
+  const users = await repo.find(User, {
     where: {
-      name: "john",
+      email: "john",
     },
   });
 
-  console.log("persons", persons);
+  console.log("users", users);
+
+  await dorm.disconnect();
 };

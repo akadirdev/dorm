@@ -4,9 +4,9 @@ import { Dorm } from "../../dorm";
 export const dorm = Dorm.init<PgConnector>({
   user: "postgres",
   host: "localhost",
-  database: "speedy",
-  password: "12345",
-  port: 5432,
+  database: "postgres",
+  password: "postgrespw",
+  port: 49153,
   connector: "pg",
   pooling: true,
 });

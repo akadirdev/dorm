@@ -2,14 +2,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "declaration": true,
-    "sourceMap": true,
     "module": "commonjs",
     "target": "es2020",
     "lib": ["es2020"],
     "esModuleInterop": true,
-    "moduleResolution": "Node"
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }
