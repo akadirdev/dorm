@@ -169,12 +169,25 @@ export class ModelSchema<T> {
   createInstances(objects: T[]): T[] {
     return objects.map((m) => {
       if (m instanceof this._target) return m;
+      const x = new this._target();
+      for (const key in m) {
+        x[key] = m[key];
+      }
+      return x;
+    });
+  }
+
+  createInstancesFromColumnNames(objects: T[]): T[] {
+    return objects.map((m) => {
+      if (m instanceof this._target) return m;
       const obj = {};
       const x = new this._target();
+
       for (const key in m) {
         const p = this.getPropNameFromColumnName(key);
         obj[p] = m[key];
       }
+
       Object.assign(x, obj);
       return x;
     });

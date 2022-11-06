@@ -258,7 +258,7 @@ export class PgConnector implements BaseConnector {
       whereQuery.values
     );
 
-    const datas = schema.createInstances(res.rows);
+    const datas = schema.createInstancesFromColumnNames(res.rows);
 
     await this.includeRelations(datas, schema, filter.relations);
 
@@ -344,7 +344,7 @@ export class PgConnector implements BaseConnector {
 
     if (!res.rowCount) return null;
 
-    const datas = schema.createInstances(res.rows);
+    const datas = schema.createInstancesFromColumnNames(res.rows);
 
     await this.includeRelations(datas, schema, filter.relations);
 
